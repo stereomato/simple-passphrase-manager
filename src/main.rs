@@ -1,16 +1,16 @@
 use std::fs;
 use rand::{thread_rng, Rng};
 
-// I have to fill this with more characters eventually, and also randomly get each character.
-static SEPARATORS: &str = "-";
+static SEPARATORS: &str = "-#¬_~=";
+static SEPARATORS_LENGTH: &usize = &6;
 
 // Returns the word itself. Inputs are the world list, and the intended line number to get.
 fn get_word(input_string: &String, linenumber: usize) -> &str {
-	let string_as_bytes = input_string.as_bytes();
+	let dict_content_as_bytes = input_string.as_bytes();
 	// This value helps with skipping lines
 	let mut counter = linenumber;
 	let mut word_start_index = 0; 
-	for (index, &character) in string_as_bytes.iter().enumerate() {
+	for (index, &character) in dict_content_as_bytes.iter().enumerate() {
 		if character == b'\n' {
 			// Return for any word that isn't the last.
 			if counter == 1 {
@@ -25,6 +25,20 @@ fn get_word(input_string: &String, linenumber: usize) -> &str {
 	}
 	// For the last word.
 	return &input_string[word_start_index..];
+}
+
+// Returns the requested separator.
+fn get_separator(separator_index: &usize) -> String {
+	let mut counter = *separator_index;
+	for character in SEPARATORS.chars() {
+		if counter == 1 {
+			return character.to_string();
+		}
+		else {
+			counter -= 1;	 
+		}
+	}
+	return "".to_string();
 }
 
 // Counts the words. Input is the word list.
@@ -48,17 +62,18 @@ fn count_words(input_string: &String) -> usize {
 }
 
 // Constucts the passphrase.
-fn construct_passphrase(dictionary_contents: &String, wordcount: &usize, passphrase_length: usize) -> String {
-	let mut length = passphrase_length;
+fn construct_passphrase(dictionary_contents: &String, wordcount: &usize, passphrase_length: &usize) -> String {
+	let mut length = *passphrase_length;
 	let mut passphrase: String = "".to_string();
 	// add up the words and their separators until the requested length is 0
 	while length > 0 {
 		let mut rng = thread_rng();
 		let requested_word_linenumber = rng.gen_range(1..=*wordcount);
+		let requested_character_index = rng.gen_range(1..=*SEPARATORS_LENGTH);
 		passphrase += get_word(dictionary_contents, requested_word_linenumber);
 		// Avoid adding a separator at the end of the passphrase.
 		if length > 1 {
-			passphrase += SEPARATORS;
+			passphrase += &get_separator(&requested_character_index);
 		}
 		length -= 1;
 	}
@@ -78,5 +93,5 @@ fn main() {
 	let wordcount = count_words(&dictionary_contents);
 	println!("The number of words is: {}", wordcount);
 
-	println!("the passphrase is {}", construct_passphrase(&dictionary_contents, &wordcount, 14));
+	println!("the passphrase is {}", construct_passphrase(&dictionary_contents, &wordcount, &14));
 }
