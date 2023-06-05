@@ -1,7 +1,14 @@
 alphabet
+astronaut
 bee
+bill
 car
+crane
 dense
+department
 effigy
+exert
 friend
+full
 gatorade
+grey

@@ -1,21 +1,24 @@
-use std::{fs};
+use std::fs;
+use rand::{thread_rng, Rng};
 
+// I have to fill this with more characters eventually, and also randomly get each character.
+static SEPARATORS: &str = "-";
 
-// Returns the word itself.
-fn get_word(input_string: &String, linecount: usize) -> &str {
+// Returns the word itself. Inputs are the world list, and the intended line number to get.
+fn get_word(input_string: &String, linenumber: usize) -> &str {
 	let string_as_bytes = input_string.as_bytes();
 	// This value helps with skipping lines
-	let mut helper = linecount;
+	let mut counter = linenumber;
 	let mut word_start_index = 0; 
-	for (index, &item) in string_as_bytes.iter().enumerate() {
-		if item == b'\n' {
+	for (index, &character) in string_as_bytes.iter().enumerate() {
+		if character == b'\n' {
 			// Return for any word that isn't the last.
-			if helper == 1 {
+			if counter == 1 {
 				return &input_string[word_start_index..index];	
 			}
 			// This helps skip to the word we intend to get, and sets the word_start_index to what it should be.
-			if helper > 1 {
-				helper -= 1;
+			if counter > 1 {
+				counter -= 1;
 				word_start_index = index + 1;
 			}
 		}
@@ -24,7 +27,7 @@ fn get_word(input_string: &String, linecount: usize) -> &str {
 	return &input_string[word_start_index..];
 }
 
-// Counts the words.
+// Counts the words. Input is the word list.
 fn count_words(input_string: &String) -> usize {
 	let string_as_bytes = input_string.as_bytes();
 	let mut counter = 0;
@@ -44,6 +47,24 @@ fn count_words(input_string: &String) -> usize {
 	return counter;
 }
 
+// Constucts the passphrase.
+fn construct_passphrase(dictionary_contents: &String, wordcount: &usize, passphrase_length: usize) -> String {
+	let mut length = passphrase_length;
+	let mut passphrase: String = "".to_string();
+	// add up the words and their separators until the requested length is 0
+	while length > 0 {
+		let mut rng = thread_rng();
+		let requested_word_linenumber = rng.gen_range(1..=*wordcount);
+		passphrase += get_word(dictionary_contents, requested_word_linenumber);
+		// Avoid adding a separator at the end of the passphrase.
+		if length > 1 {
+			passphrase += SEPARATORS;
+		}
+		length -= 1;
+	}
+	return passphrase;
+}
+
 fn main() {
 	let dictionary_file = "./src/english-dictionary.txt";
 	
@@ -56,4 +77,6 @@ fn main() {
 	//println!("{}",dictionary_contents);
 	let wordcount = count_words(&dictionary_contents);
 	println!("The number of words is: {}", wordcount);
+
+	println!("the passphrase is {}", construct_passphrase(&dictionary_contents, &wordcount, 14));
 }
