@@ -1,7 +1,10 @@
 use std::fs;
+use std::io;
 use rand::{thread_rng, Rng};
 
-static SEPARATORS: &str = "-#¬_~=";
+// Global, constant list of separators.
+// TODO: Let the user supply its own file with separators.
+static SEPARATORS: &str = "-#¬_~=*+·─̣";
 static SEPARATORS_LENGTH: &usize = &6;
 
 // Returns the word itself. Inputs are the world list, and the intended line number to get.
@@ -69,6 +72,8 @@ fn construct_passphrase(dictionary_contents: &String, wordcount: &usize, passphr
 	while length > 0 {
 		let mut rng = thread_rng();
 		let requested_word_linenumber = rng.gen_range(1..=*wordcount);
+		// Re-seeding...
+		rng = thread_rng();
 		let requested_character_index = rng.gen_range(1..=*SEPARATORS_LENGTH);
 		passphrase += get_word(dictionary_contents, requested_word_linenumber);
 		// Avoid adding a separator at the end of the passphrase.
@@ -85,13 +90,16 @@ fn main() {
 	
 	let dictionary_contents = fs::read_to_string(dictionary_file).expect("Couldn't read file.");
 
-	let test = get_word(&dictionary_contents, 61);
-	let test_word = test;
-	println!("The word is {}.", test_word);
-
-	//println!("{}",dictionary_contents);
-	let wordcount = count_words(&dictionary_contents);
-	println!("The number of words is: {}", wordcount);
-
-	println!("the passphrase is {}", construct_passphrase(&dictionary_contents, &wordcount, &14));
+	// Actual user facing cli app code
+	println!("Welcome to simple-passphrase-manager, the simple passphrase manager that's currently just a passphrase generator. Hey, I'm barely learning Rust and this is a small cli app exactly for that.");
+	println!("Currently this program reads the dictionary file located at {}", dictionary_file);
+	println!("How many words long should the passphrase be?");
+	// TODO: use either the crossterm or temion crates to avoid printing a new line when requesting input of the user.
+	println!("Requested length: ");
+	let mut requested_passphrase_length = String::new();
+	io::stdin().read_line(&mut requested_passphrase_length).expect("Somehow failed to read the input.");
+	let dictionary_wordcount = count_words(&dictionary_contents);
+	println!("Requested passphrase length: {}", requested_passphrase_length);
+	println!("Number of words in the dictionary: {}", dictionary_wordcount);
+	println!("Passphrase: {}", construct_passphrase(&dictionary_contents, &dictionary_wordcount, &requested_passphrase_length.trim().parse::<usize>().unwrap()));
 }
