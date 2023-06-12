@@ -1,2 +1,2 @@
 # simple-passphrase-manager
-A simple passphrase manager written in Rust 🦀
+A simple passphrase manager (currently only generator) written in Rust 🦀
