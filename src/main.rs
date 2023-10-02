@@ -5,18 +5,26 @@ use lazy_static::lazy_static;
 use rand::{thread_rng, Rng};
 
 // Global, constant list of separators.
-// TODO: Let the user supply its own file with separators.
-// TODO: Since I don't wanna deal with having repeated keys in the hashmap for capitalized or non capitalized letters, just fugging turn them into non capitalized ones when checking to replace them. 5000 IQ, I know. I know.
+// TODO: Decide how to deal with uppercase characters, in case they are in the dictionary.
+//	I guess it's best to put in effort to properly give back uppercase characters when provided
+//	those.
+// NEW: IT DOESN'T MATTER, IF THEY CAN BE REPLACED WITH SOMETHING IN THE TYPO_CHARACTERS LIST,
+//	THE NUMBER OR CHARACTER I USE WILL FIT FINE. WOWEE!
 lazy_static! {
-	static ref SEPARATORS: &'static str = "-#¬_~=*+─ ";
+	static ref SEPARATORS: &'static str = "-#¬_~=*+─";
 	static ref SEPARATORS_LENGTH: usize = SEPARATORS.chars().count();
 	static ref TYPO_CHARACTERS: HashMap<&'static str, &'static str> = HashMap::from([
 		("a", "4"),
+		("A", "4"),
 		("e", "3"),
+		("E", "3"),
 		("i", "1"),
+		("I", "1"),
 		("o", "0"),
+		("O", "0"),
 		("l", "!"),
-		("s", "5")										
+		("s", "5"),
+		("S", "5"),										
 	]);
 }
 
@@ -61,16 +69,16 @@ fn get_separator(separator_index: &usize) -> String {
 fn count_words(input_string: &String) -> usize {
 	let string_as_bytes = input_string.as_bytes();
 	let mut counter = 0;
-	let mut last_character = 0;
+	let mut previous_character = 0;
 	for (_index, &item) in string_as_bytes.iter().enumerate() {
-		// If the current character is a newline, but the last one isn't a newline, add 1 to the counter.
-		if item == b'\n' && last_character != b'\n' {
+		// If the current character is a newline, but the previous one isn't a newline, add 1 to the counter.
+		if item == b'\n' && previous_character != b'\n' {
 			counter += 1;
 		}
-		last_character = item;
+		previous_character = item;
 	}
-	// If the last character isn't empty nor it is a newline, add 1 to the counter (to start from 1).
-	if last_character != 0 && last_character != b'\n' {
+	// If the previous character isn't empty nor it is a newline, add 1 to the counter (to start from 1).
+	if previous_character != 0 && previous_character != b'\n' {
 		counter += 1;
 	}
 	return counter;
@@ -78,10 +86,8 @@ fn count_words(input_string: &String) -> usize {
 
 // Modify some of the characters of a given word, aka "typo-ify" them.
 fn typoify_word(input_word: &str) -> String {
-	let mut rng = thread_rng();
 	// 50% chance to typoify a word.
-	let typoify_chance = rng.gen_range(0..=1);
-	if typoify_chance != 1 {
+	if rand::random() {
 		return input_word.to_string();
 	}
 	let mut typoified_word = Default::default();
@@ -103,12 +109,10 @@ fn construct_passphrase(dictionary_contents: &String, wordcount: &usize, passphr
 	// add up the words and their separators until the requested length is 0
 	while length > 0 {
 		let mut rng = thread_rng();
-		let requested_word_linenumber = rng.gen_range(1..=*wordcount);
-		// Re-seeding... is this even necessary? I don't know
-		rng = thread_rng();
-		let requested_character_index = rng.gen_range(1..=*SEPARATORS_LENGTH);
+		let requested_word_line_number = rng.gen_range(1..=*wordcount);
+		let requested_separator_index = rng.gen_range(1..=*SEPARATORS_LENGTH);
 		// current word we got
-		let current_word = get_word(dictionary_contents, requested_word_linenumber);
+		let current_word = get_word(dictionary_contents, requested_word_line_number);
 		if *typoify == 1 {
 			passphrase += &typoify_word(current_word);
 		}
@@ -117,7 +121,7 @@ fn construct_passphrase(dictionary_contents: &String, wordcount: &usize, passphr
 		}
 		// Avoid adding a separator at the end of the passphrase.
 		if length > 1 {
-			passphrase += &get_separator(&requested_character_index);
+			passphrase += &get_separator(&requested_separator_index);
 		}
 		length -= 1;
 	}

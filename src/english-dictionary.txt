@@ -12,3 +12,5 @@ friend
 full
 gatorade
 grey
+Sky
+Veins
